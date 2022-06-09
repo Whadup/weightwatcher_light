@@ -88,7 +88,7 @@ class AlphaEstimator():
             yy = torch.nn.functional.linear(y, self.layer.weight.T, None)
         return (2.0 / self.x_max) * yy.view(-1, self.n).detach() - W 
     def normalSample(self):
-        self.X = torch.nn.init.normal_(self.X)
+        self.X = torch.nn.init.normal_(self.X).sign()
 
     @torch.no_grad()
     def produceSample(self):
@@ -125,12 +125,12 @@ class AlphaEstimator():
         return f#torch.matmul(torch.t(self.X),f)
 
     def estimateAlpha(self, draws=1):
-        t = torch.zeros(self.coeffs.shape[0]).to(self.device)
+        t = torch.zeros(draws,self.coeffs.shape[0]).to(self.device)
         for repeats in range(draws):
             particles = self.produceSample()
-            t += particles.mean(dim=(0, 1))
+            t[repeats,:] = particles.mean(dim=(0, 1))
             # print(particles.std(dim=(0,1)) / particles.mean(dim=(0,1)))
-        t /= 1.0 * draws
+        t, _ = torch.median(t, dim=0) # median of means...for robustness...cause sometimes things go belly-up
         return 1 + t[1::2] / t[::2], t[0::2], t[1::2]
     def fit(self, draws=1):
         alphas, summe, n = self.estimateAlpha(draws=draws)
@@ -147,11 +147,11 @@ class AlphaEstimator():
         alpha_best = -1
         xmin_best = 0
         n = n.clamp(0, min(self.n, self.m))
-        ignore = len(alphas) // 100 + 1 #TODO: This feels hacky...
+        ignore = len(alphas) // 200 + 1 #TODO: This feels hacky...
         for i, (xm, alpha) in enumerate(zip(self.x_min[:-ignore], alphas[:-ignore])):
             empirical_cumulative = (n[i] - n) / n[i]
             model = 1 - (xm / x_min) ** (alpha - 1) #evaluate at the xmin points
-            D = (model[i+1:] - empirical_cumulative[i+1:]).abs().max()
+            D = (model[i:] - empirical_cumulative[i:]).abs().max()
             # print((model[i:] - empirical_cumulative[i:]).abs().cpu().numpy(), D.item())
             # print(alpha, xm, D, ((model[i:] - empirical_cumulative[i:])**2).mean())
             if D < D_best:
