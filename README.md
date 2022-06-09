@@ -1,6 +1,6 @@
 # WeightWatcher *light*
 
-A small reimplementation of the `weightwatcher` project. No affiliation whatsoever.
+A small reimplementation of the [`weightwatcher`](https://github.com/CalculatedContent/WeightWatcher) project. No affiliation whatsoever.
 Why? For fun.
 
 ## Demo
