@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
 Beside the much smaller number of features, the most signficicant difference is how we estimate the eigenvalues of convolution layers:
 Per default, `weightwatcher` treats convolution kernels of size $w \times h$ as $w\cdot h$ separate matrices, and estimates their eigenvalues. 
-Instead, we treat the convolution layer as a linear operator that maps from one vector space to another and we estimate the eigenvalues of this operator.
+Instead, we treat both linear layers and convolution layers as a linear operators that map from one vector space to another and we estimate the eigenvalues of these operators.
 For large input images, the rank of these operators can be larger than 100,000. 
 This is why we apply an approximation technique based on Hutchinson's trace estimators in conjunction with Chebyshev polynomials to obtain the best powerlaw fit.
 
