@@ -58,6 +58,13 @@ def weightwatcher(model, input_shape, device="cuda", chebyshev_degree=64, num_ba
             layer_info["alpha_svd"] = P.alpha
             layer_info["xmin_svd"] = P.xmin
             layer_info["D_svd"] = P.D
+            scores = []
+            for xm in np.logspace(-8, np.log10(A.x_max), 1000):
+                P = powerlaw.Fit(s, xmin=xm, suppress_output=True)
+                scores.append((P.alpha, P.D))
+            scores = sorted(scores, key=lambda x:x[1])
+            print(scores[:10])
+            # print("svd + powerlaw produces alpha ", P.alpha, "with x_min", P.xmin, f"(D={P.D})")
         layerwise_info.append(layer_info)
     model_info = { k:np.nanmean([l.get(k, np.nan) for l in layerwise_info]) for k in  layerwise_info[0].keys() if isinstance(layerwise_info[0][k], float)}
     return dict(layers=layerwise_info, **model_info)

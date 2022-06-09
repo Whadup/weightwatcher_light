@@ -1,3 +1,4 @@
+import pandas as pd
 import torchvision.models as models
 from weightwatcher_light import weightwatcher
 if __name__ == "__main__":
@@ -5,9 +6,9 @@ if __name__ == "__main__":
     for model_cls in [models.vgg11, models.vgg13, models.vgg16, models.vgg19]:
         print(f"======{model_cls.__name__}======")
         model = model_cls(pretrained=True).cuda()
-        statistics = weightwatcher(model, (1, 3, 32, 32), verbose=True, debug=True)
+        statistics = weightwatcher(model, (1, 3, 32, 32), verbose=False, debug=False)
+        print(pd.DataFrame(statistics["layers"]).to_markdown())
         statistics.pop("layers")
-        print(statistics)
         results.append(statistics)
     
     for n, r in zip(["VGG11", "VGG13", "VGG16", "VGG19"], results):

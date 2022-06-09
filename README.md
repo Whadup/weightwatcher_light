@@ -8,6 +8,7 @@ Why? For fun. Mostly. And to toy around with Chebyshev polynomials for matrices.
 ``` python
 # python demo.py
 
+import pandas as pd
 import torchvision.models as models
 from weightwatcher_light import weightwatcher
 if __name__ == "__main__":
@@ -15,12 +16,27 @@ if __name__ == "__main__":
     for model_cls in [models.vgg11, models.vgg13, models.vgg16, models.vgg19]:
         print(f"======{model_cls.__name__}======")
         model = model_cls(pretrained=True).cuda()
-        statistics = weightwatcher(model, (1, 3, 32, 32), verbose=True, debug=True)
+        statistics = weightwatcher(model, (1, 3, 32, 32), verbose=False, debug=False)
+        print(pd.DataFrame(statistics.pop("layers")).to_markdown())
         results.append(statistics)
     
     for n, r in zip(["VGG11", "VGG13", "VGG16", "VGG19"], results):
         print(n, r)
 ```
+
+|    | layer                                                               |   spectral_norm |    alpha |   weighted_alpha |         D |       xmin | input_size      | output_size      |     N |     M |
+|---:|:--------------------------------------------------------------------|----------------:|---------:|-----------------:|----------:|-----------:|:----------------|:-----------------|------:|------:|
+|  0 | Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))    |        252.795  | 11.9232  |         28.6487  | 0.105255  | 202.4      | [1, 3, 32, 32]  | [1, 64, 32, 32]  |  3072 | 65536 |
+|  1 | Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))  |         89.7801 |  1.72747 |          3.37405 | 0.0873823 |   2.69943  | [1, 64, 16, 16] | [1, 128, 16, 16] | 16384 | 32768 |
+|  2 | Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) |         73.0979 |  1.77617 |          3.31062 | 0.064562  |   1.24577  | [1, 128, 8, 8]  | [1, 256, 8, 8]   |  8192 | 16384 |
+|  3 | Conv2d(256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) |         81.6822 |  4.6921  |          8.9719  | 0.046055  |  33.477    | [1, 256, 8, 8]  | [1, 256, 8, 8]   | 16384 | 16384 |
+|  4 | Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) |         89.7895 |  2.10929 |          4.11992 | 0.0650091 |   2.7608   | [1, 256, 4, 4]  | [1, 512, 4, 4]   |  4096 |  8192 |
+|  5 | Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) |        176.504  |  3.06774 |          6.89246 | 0.0357556 |  12.602    | [1, 512, 4, 4]  | [1, 512, 4, 4]   |  8192 |  8192 |
+|  6 | Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) |         51.9428 |  3.84261 |          6.5921  | 0.0478162 |  10.083    | [1, 512, 2, 2]  | [1, 512, 2, 2]   |  2048 |  2048 |
+|  7 | Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)) |        130.978  |  3.23253 |          6.84391 | 0.0387834 |   5.59936  | [1, 512, 2, 2]  | [1, 512, 2, 2]   |  2048 |  2048 |
+|  8 | Linear(in_features=25088, out_features=4096, bias=True)             |         34.7824 |  2.38513 |          3.67634 | 0.0289069 |   0.431471 | [1, 25088]      | [1, 4096]        | 25088 |  4096 |
+|  9 | Linear(in_features=4096, out_features=4096, bias=True)              |         60.2786 |  2.22953 |          3.96892 | 0.0336329 |   0.417442 | [1, 4096]       | [1, 4096]        |  4096 |  4096 |
+| 10 | Linear(in_features=4096, out_features=1000, bias=True)              |         58.7861 |  2.77698 |          4.91324 | 0.0201149 |   5.53593  | [1, 4096]       | [1, 1000]        |  4096 |  1000 |
 
 ## Major Differences
 
