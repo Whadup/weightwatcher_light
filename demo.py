@@ -6,7 +6,7 @@ if __name__ == "__main__":
     for model_cls in [models.vgg11, models.vgg13, models.vgg16, models.vgg19]:
         print(f"======{model_cls.__name__}======")
         model = model_cls(pretrained=True).cuda()
-        statistics = weightwatcher(model, (1, 3, 32, 32), verbose=False, debug=False)
+        statistics = weightwatcher(model, (1, 3, 32, 32), verbose=True, debug=False)
         print(pd.DataFrame(statistics["layers"]).to_markdown())
         statistics.pop("layers")
         results.append(statistics)
