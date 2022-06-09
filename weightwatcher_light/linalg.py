@@ -98,45 +98,32 @@ class AlphaEstimator():
         # M2 = M2.new_tensor(self.X).to(self.device).detach()
         M2 = self.X.clone().detach()
         M1 = matMat(M2)
-        # print(torch.linalg.norm(self.X, dim=1).mean())
-        # print(torch.linalg.norm(M2, dim=1).mean())
-        # print(torch.linalg.norm(M1, dim=1).mean())
 
-        # f = torch.zeros((self.samples, 1)).to(self.device).detach()
         f = (self.coeffs[:, 0] * torch.bmm(self.X.view(self.samples, 1, m), M2.view(self.samples, m, 1)) +
              self.coeffs[:, 1] * torch.bmm(self.X.view(self.samples, 1, m), M1.view(self.samples, m, 1)))
 
         for i in range(2, self.deg):
             F = 2.0 * matMat(M1) - M2
-            # print(torch.linalg.norm(F, dim=1).mean())
 
             del M2
             M2 = M1
             M1 = F
-            # print(M2.shape,M1.shape,F.shape,torch.norm(F,dim=1))
+
             f  = f + self.coeffs[:, i] * torch.bmm(self.X.view(self.samples, 1, m), F.view(self.samples, m, 1))
-            # if len(self.coeffs) == 1:
-            #     print("f_"+str(i), torch.mean(f, dim=(0, 1)))
-        return f#torch.matmul(torch.t(self.X),f)
+
+        return f
 
     def estimateAlpha(self, draws=1):
         t = torch.zeros(draws,self.coeffs.shape[0]).to(self.device)
         for repeats in range(draws):
             particles = self.produceSample()
             t[repeats,:] = particles.mean(dim=(0, 1))
-            # print(particles.std(dim=(0,1)) / particles.mean(dim=(0,1)))
         t, _ = torch.median(t, dim=0) # median of means...for robustness...cause sometimes things go belly-up
         return 1 + t[1::2] / t[::2], t[0::2], t[1::2]
     def fit(self, draws=1):
         alphas, summe, n = self.estimateAlpha(draws=draws)
         # print(n)
-        npn = n.cpu().numpy()
-        try:
-            which = np.argwhere(npn < npn[0] / 4).min()
-        except:
-            which = 0
-        # print(n)
-        # print(n[0], empirical_cumulative)
+
         x_min = torch.tensor(self.x_min).to(self.device)
         D_best = 1
         alpha_best = -1
@@ -154,19 +141,7 @@ class AlphaEstimator():
                 alpha_best = alpha
                 D_best = D
                 which = i
-            # print(D)
-        
-        # print(n)
-        # likelihoods = n * torch.log(alphas - 1) \
-        #             + n * (alphas - 1) * torch.log(x_min) \
-        #             - summe * (alphas)
-        # likelihoods = np.nan_to_num(likelihoods.cpu().numpy(), nan=-np.inf)
-        # # # print(alphas)
-        # # print(*zip(alphas.cpu().numpy(), self.x_min, likelihoods))
-        # which = likelihoods.argmax()
-        # print(alphas[].item(), self.x_min[likelihoods.argmax()])
-        # print("alpha", alphas[which].item(), "\txmin", self.x_min[which],)#, likelihoods[which])
-        # self.xmin = self.x_min[which]
+
         self.xmin = xmin_best
         self.D = D_best
         
@@ -183,21 +158,7 @@ class TopEigValsEstimator():
         self.m = np.prod(shape_out)
         self.n = np.prod(shape_in)
 
-        # return cp.array(y.view(self.m).detach()).astype(cp.float64)
-        # print(w, w.device)
-        # y = torch.from_numpy(w.astype(np.float32)).view(self.shape_out).to(self.device)
-        # print(y.device)
-        # print(y)
-        # bitch2 = self.H.register_hook(lambda x: print(x.shape))
-        # bitch = self.H.register_hook(lambda x: y)
-        # z = torch.sum(self.H)
-        # z.backward(retain_graph=True)
-        # bitch.remove() #get out the way!
-        # y = self.layer(self.X.grad)
-        # self.X.grad.data.zero_()
     def matVec(self, w):
-        # print(w.shape)
-        # y = torch.as_tensor(w, device=self.device).float().view(self.shape_out)
         y = w.view(self.shape_out)
         if isinstance(self.layer, torch.nn.Conv2d):
             yy = torch.nn.functional.conv_transpose2d(y, self.layer.weight, None, self.layer.stride, self.layer.padding, 0, self.layer.groups, self.layer.dilation)
@@ -207,7 +168,6 @@ class TopEigValsEstimator():
             y = torch.nn.functional.linear(yy, self.layer.weight, None)
         return y.view(self.m, 1).detach()
     def matVecT(self,y):
-
         yy = y.view(self.shape_in)
         if isinstance(self.layer, torch.nn.Conv2d):
             y = torch.nn.functional.conv2d(yy, self.layer.weight, None, self.layer.stride, self.layer.padding, self.layer.dilation, self.layer.groups)
@@ -218,114 +178,13 @@ class TopEigValsEstimator():
             y = torch.nn.functional.linear(yy, self.layer.weight, None)
             yy = torch.nn.functional.linear(y, self.layer.weight.T, None)
         x = yy.view(self.n, 1).detach()#
-        # x = cp.array(x)
         return x
-        # yy = torch.from_numpy(y.astype(np.float32)).view(self.shape_in).to(self.device)
 
-        #x = x.cpu().numpy()
-        # bitch = self.H.register_hook(lambda x: yy)
-        # z = torch.sum(self.H)
-        # z.backward(retain_graph=True)
-        # bitch.remove() #get out the way!
-        
-        # # print(x)
-        # return x
     def estimateEigVals(self,budget):
-        #self.X = torch.autograd.Variable(torch.randn(self.shape_in).to(self.device),requires_grad=True)
-        #self.H = self.layer(self.X)
         if self.m < self.n:
             s = own_eigsh(self.matVec, self.m, k=min(self.m - 1, budget))
-            # s = eigsh(
-            #     LinearOperator((self.m,self.m), matvec=self.matVec),
-            #     k=min(self.m - 1, budget),
-            #     which="LM",
-            #     return_eigenvectors=False,
-            # )
-            # print("logpcg")
-            # s2, _ = lobpcg(
-            #     LinearOperator((self.m, self.m), matvec=self.matVec),
-            #     cp.random.ranf((self.m, budget)),
-            #     maxiter=1000
-            # )
         else:
             s = own_eigsh(self.matVecT, self.n, k=min(self.n - 1, budget))
-            # s = eigsh(
-                # LinearOperator((self.n, self.n), matvec=self.matVecT),
-                # k=min(self.n - 1,budget),
-                # which="LM",
-                # return_eigenvectors=False,
-                # ncv=4*budget)
-        # del self.X
-        # del self.H
         return s.cpu().numpy()
-
-
-
-# def matvecT(v):
-#     return W.T @ (W @v.reshape(-1,1))
-# import cupy as cp
-# from cupyx.scipy.sparse.linalg import eigsh
-# from scipy.sparse.linalg import eigsh as seigsh
-# from scipy.sparse.linalg import LinearOperator as SLinearOperator
-# W = cp.eye(100)[:,:50] + cp.random.randn(100,50).astype(cp.float32)
-# W = W @ W.T
-
-# def matvec(v):
-#     return W @ v.reshape(-1, 1)
-# def smatvec(v):
-#     return W.get() @ v.reshape(-1, 1)
-# def tmatvec(v):
-#     return torch.as_tensor(W, device="cuda", dtype=torch.float32) @ v.reshape(-1, 1)
-# for k in range(1, 40):
-#     print(k,
-#           eigsh(LinearOperator((100, 100), matvec=matvec), k=k, return_eigenvectors=False, which="LM")[-1],
-#           seigsh(SLinearOperator((100, 100), matvec=smatvec), k=k, return_eigenvectors=False, which="LM"),
-#           own_eig(tmatvec, 100, k=k).cpu().numpy()
-#     )
-
-# asdfa
-
-# from torchvision.models import resnet18, vgg16
-# from torchinfo import summary
-# import powerlaw
-# r = resnet18(pretrained=True)
-# summ = summary(r, (1, 3, 64, 64), col_names=("input_size", "output_size"), verbose=0)
-# for l in summ.summary_list:
-#     input_size = l.input_size
-#     output_size = l.output_size
-
-#     l = l.module
-#     if not isinstance(l, (torch.nn.Linear, torch.nn.Conv2d)):#, 
-#         continue
-#     s = SpikeApproximator(l, "cuda", input_size, output_size)
-#     S = s.estimateSpikes(1)
-#     # print(S)
-#     # S = np.sqrt(np.abs(S))
-#     A = AlohaEstimator(l, "cuda", input_size, output_size, None, S.item(), 256)
-#     alpha = A.fit()
-
-#     if isinstance(l,torch.nn.Linear):
-#         s = torch.linalg.svdvals(l.weight).detach().cpu().numpy()  ** 2
-#         # print(s)
-#         P = powerlaw.Fit(s)
-#         print(P.alpha, P.xmin)
-#         # P = powerlaw.Fit(s, xmin=A.xmin)
-#         # print(P.alpha, P.xmin)
-#         # A = AlohaEstimator(l, "cuda", input_size, output_size, P.xmin, S.item(), 128)
-#         # A.fit()
-#         # def func(x):
-#         #     return (((x + 1) * (0.5 * S.item())) > A.xmin) * np.nan_to_num((np.log((x + 1) * (0.5 * S.item()) / A.xmin)))
-#         # print("wrong?", 1 + len(s[s > P.xmin]) / np.log(s[s > P.xmin] / P.xmin).sum())
-#         # print("exact func", 1 + len(s[s > P.xmin]) / func(s / (0.5 * S.item()) - 1).sum())
-#         # coeffs = np.polynomial.chebyshev.chebinterpolate(func, 256)
-        
-#         # print("cheby func", 1 + len(s[s > P.xmin]) / np.polynomial.chebyshev.chebval(s / (0.5 * S.item()) - 1, coeffs).sum())
-#         # print("summe", A.summe.item(),  np.polynomial.chebyshev.chebval(s / (0.5 * S.item()) - 1, coeffs).sum())
-#         # print("n", A.est_n.item(), len(s[s > A.xmin]) )
-#         # print(1 + A.est_n.item() / A.summe.item())
-#     # # print(S)
-#     # P = results = powerlaw.Fit(S) #xmin=(S[-1] + np.linalg.svd(l.weight.detach().cpu().numpy().reshape(l.weight.shape[0], -1), compute_uv=False).min()) / 2
-#     # print(P.alpha, S[-1], S[0])
-
 
 
