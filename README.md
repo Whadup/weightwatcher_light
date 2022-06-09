@@ -52,7 +52,7 @@ $$
 and in case of the denominator we are interested in the function family 
 
 $$
-f(\lambda) = 1[\lambda_i \geq x_m]\log \frac {\lambda_i}{x_m}
+f(\lambda) = 1[\lambda \geq x_m]\log \frac {\lambda}{x_m}
 $$
 
 for the set of possible lower bounds $x_m$.
