@@ -36,17 +36,25 @@ Estimating powerlaws of the eigenvalues $\lambda_1,\ldots,\lambda_n$ requires es
 Given the lower bound, the maximum-likelihood estimator for the scale is 
 $$\hat \alpha = 1 + \frac{\sum\limits_{i=1}^n 1[\lambda_i \geq x_m]}{ \sum\limits_{i=1}^n 1[\lambda_i \geq x_m]\log \frac {\lambda_i}{x_m}}.$$
 We estimate the sums in the nominator and denominator using Hutchinson's trace estimators and Chebyshev polynomials. First, recall that the trace can be written as an expectation, the so-called Hutchinson trace estimator
+
 $$
 \mathrm{tr}(W) = \sum\limits_{i=1}^n \lambda_i = \mathbb E_{x \sim \mathcal N(0,I)} x^TWx
 $$
+
 and hence we can estimate the trace using a finite number of samples.
 
 For a matrix function $f(W)$, we can analogously estimate 
+
 $$
 \mathrm{tr}(f(W)) = \sum\limits_{i=1}^n f(\lambda_i) = \mathbb E_{x \sim \mathcal N(0,I)} x^Tf(W)x,
 $$
+
 and in case of the denominator we are interested in the function family 
-$$f(\lambda) = 1[\lambda_i \geq x_m]\log \frac {\lambda_i}{x_m}$$
+
+$$
+f(\lambda) = 1[\lambda_i \geq x_m]\log \frac {\lambda_i}{x_m}
+$$
+
 for the set of possible lower bounds $x_m$.
 We neither want to compute all $\lambda_i$ numerically, as $W$ is very high-dimensional, nor can we compute $f(W)$. Instead, we approximate $f(\lambda)$ using Chebyshev polynomials. Consequently, we can approximate $f(W)$ using the matrix Chebyshev polynomial base and the coefficient approximated on $f(\lambda)$. 
 From an implementation viewpoint, in conjunction with the trace estimator,we require no knowledge of the matrix $W$; it suffices to know how to compute the matrix-vector products $Wx$ and $W^Ty$. In case of convolution layers, these are the forward- and backward-pass implementations of convolution.
