@@ -23,11 +23,6 @@ def own_eigsh(linop, N, k):
 
 class AlphaEstimator():
     def __init__(self, layer, device, shape_in, shape_out, x_min=None, x_max=None, deg=128):
-        
-        
-        def log(x):
-            #log((x*15 + 15) / 0.1), log(30/0.1)
-            return np.log((x + 1) * (0.5 * x_max))
         self.layer = layer
         self.device = device
         self.shape_in = shape_in
