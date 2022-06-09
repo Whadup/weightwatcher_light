@@ -35,7 +35,7 @@ This is why we apply an approximation technique based on Hutchinson's trace esti
 Estimating powerlaws of the eigenvalues $\lambda_1,\ldots,\lambda_n$ requires estimation of two parameters: $\alpha$, the scaling parameter, and $x_m$, the lower bound.
 Given the lower bound, the maximum-likelihood estimator for the scale is 
 $$\hat \alpha = 1 + \frac{\sum\limits_{i=1}^n 1[\lambda_i \geq x_m]}{ \sum\limits_{i=1}^n 1[\lambda_i \geq x_m]\log \frac {\lambda_i}{x_m}}.$$
-We estimate the sums in the nominator and denominator using Hutchinson's trace estimators and Chebyshev polynomials. First, recall that the trace can be written as an expectation
+We estimate the sums in the nominator and denominator using Hutchinson's trace estimators and Chebyshev polynomials. First, recall that the trace can be written as an expectation, the so-called Hutchinson trace estimator
 $$
 \mathrm{tr}(W) = \sum\limits_{i=1}^n \lambda_i = \mathbb E_{x \sim \mathcal N(0,I)} x^TWx
 $$
