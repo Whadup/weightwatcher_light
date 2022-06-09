@@ -26,7 +26,7 @@ if __name__ == "__main__":
 gives us the following output for the VGG16 network
 ![VGG16 output](https://github.com/Whadup/weightwatcher_light/blob/a1036c8bf8afce24f8805b62fe991a07e75064fd/weightwatcher.png)
 
-## Major Differences
+## Major Differences to `weightwatcher`
 
 Beside the much smaller number of features, the most signficicant difference is how we estimate the eigenvalues of convolution layers:
 Per default, `weightwatcher` treats convolution kernels of size $w \times h$ as $w\cdot h$ separate matrices, and estimates their eigenvalues. 
